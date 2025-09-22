@@ -1,0 +1,68 @@
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
+import { Route, Fuel, Wrench, Calendar } from "lucide-react";
+import { motion } from "framer-motion";
+
+export default function RecentActivity({ trips, maintenanceRecords }) {
+  const activities = [
+    ...trips.slice(0, 3).map(trip => ({
+      type: 'trip',
+      date: trip.date,
+      title: `${trip.distance_km} km ride`,
+      subtitle: trip.start_location && trip.end_location ? `${trip.start_location} → ${trip.end_location}` : 'Trip completed',
+      icon: Route,
+      color: 'text-blue-600'
+    })),
+    ...maintenanceRecords.slice(0, 2).map(record => ({
+      type: 'maintenance',
+      date: record.date,
+      title: record.description,
+      subtitle: record.type.replace('_', ' ').toUpperCase(),
+      icon: Wrench,
+      color: 'text-orange-600'
+    }))
+  ].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
+
+  return (
+    <Card className="bg-white/80 backdrop-blur-sm border-slate-200">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-slate-900">
+          <Calendar className="w-5 h-5" />
+          Recent Activity
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {activities.length === 0 ? (
+          <div className="text-center py-8 text-slate-500">
+            <Calendar className="w-12 h-12 mx-auto mb-4 text-slate-300" />
+            <p>No recent activity</p>
+            <p className="text-sm">Start logging your trips!</p>
+          </div>
+        ) : (
+          activities.map((activity, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className="flex items-center gap-4 p-4 rounded-xl bg-slate-50/50 hover:bg-slate-100/50 transition-colors duration-200"
+            >
+              <div className={`p-2 rounded-lg bg-white shadow-sm ${activity.color}`}>
+                <activity.icon className="w-4 h-4" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-slate-900 truncate">{activity.title}</p>
+                <p className="text-sm text-slate-600 truncate">{activity.subtitle}</p>
+              </div>
+              <Badge variant="outline" className="text-xs">
+                {format(new Date(activity.date), 'MMM d')}
+              </Badge>
+            </motion.div>
+          ))
+        )}
+      </CardContent>
+    </Card>
+  );
+}

@@ -1,0 +1,192 @@
+
+import React, { useState, useEffect } from "react";
+import { MaintenanceRecord } from "@/entities/MaintenanceRecord";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Wrench, Calendar, DollarSign, Building2 } from "lucide-react";
+import { format } from "date-fns";
+import { motion } from "framer-motion";
+
+export default function Maintenance() {
+  const [records, setRecords] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadRecords();
+  }, []);
+
+  const loadRecords = async () => {
+    setIsLoading(true);
+    const data = await MaintenanceRecord.list("-date");
+    setRecords(data);
+    setIsLoading(false);
+  };
+
+  const totalCost = records.reduce((sum, record) => sum + (record.cost || 0), 0);
+
+  const typeColors = {
+    oil_change: "bg-blue-50 text-blue-700 border-blue-200",
+    tire_change: "bg-green-50 text-green-700 border-green-200",
+    brake_service: "bg-red-50 text-red-700 border-red-200",
+    chain_maintenance: "bg-orange-50 text-orange-700 border-orange-200",
+    general_service: "bg-purple-50 text-purple-700 border-purple-200",
+    repair: "bg-yellow-50 text-yellow-700 border-yellow-200",
+    other: "bg-gray-50 text-gray-700 border-gray-200"
+  };
+
+  return (
+    <div className="min-h-screen p-6">
+      <div className="max-w-6xl mx-auto space-y-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
+        >
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2">
+              Maintenance Records
+            </h1>
+            <p className="text-slate-600">Keep track of your bike's service history</p>
+          </div>
+          <Button className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 shadow-lg">
+            <Plus className="w-4 h-4 mr-2" />
+            Add Service Record
+          </Button>
+        </motion.div>
+
+        {/* Summary Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+            <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white">
+              <CardContent className="p-6">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-orange-100">Total Records</p>
+                    <p className="text-3xl font-bold">{records.length}</p>
+                  </div>
+                  <Wrench className="w-8 h-8 text-orange-200" />
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+            <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white">
+              <CardContent className="p-6">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-green-100">Total Cost</p>
+                    <p className="text-3xl font-bold">₹{totalCost.toFixed(2)}</p>
+                  </div>
+                  <DollarSign className="w-8 h-8 text-green-200" />
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+            <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+              <CardContent className="p-6">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-blue-100">Last Service</p>
+                    <p className="text-xl font-bold">
+                      {records.length > 0 ? format(new Date(records[0].date), 'MMM d') : 'None'}
+                    </p>
+                  </div>
+                  <Calendar className="w-8 h-8 text-blue-200" />
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
+
+        {/* Maintenance Records */}
+        <Card className="bg-white/80 backdrop-blur-sm border-slate-200">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-slate-900">
+              <Wrench className="w-5 h-5" />
+              Service History
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="space-y-4">
+                {Array(3).fill(0).map((_, i) => (
+                  <div key={i} className="animate-pulse">
+                    <div className="h-24 bg-slate-200 rounded"></div>
+                  </div>
+                ))}
+              </div>
+            ) : records.length === 0 ? (
+              <div className="text-center py-16">
+                <Wrench className="w-16 h-16 mx-auto mb-6 text-slate-300" />
+                <h3 className="text-xl font-semibold text-slate-600 mb-2">No maintenance records</h3>
+                <p className="text-slate-500 mb-6">Start tracking your bike's service history</p>
+                <Button className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add First Record
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {records.map((record, index) => (
+                  <motion.div
+                    key={record.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="p-6 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors duration-200"
+                  >
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-orange-100 rounded-lg">
+                          <Wrench className="w-5 h-5 text-orange-600" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-slate-900">{record.description}</h3>
+                          <div className="flex items-center gap-4 mt-1 text-sm text-slate-600">
+                            <span className="flex items-center gap-1">
+                              <Calendar className="w-4 h-4" />
+                              {format(new Date(record.date), 'MMM d, yyyy')}
+                            </span>
+                            {record.service_provider && (
+                              <span className="flex items-center gap-1">
+                                <Building2 className="w-4 h-4" />
+                                {record.service_provider}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        {record.cost > 0 && (
+                          <p className="font-semibold text-slate-900 text-lg">
+                            ₹{record.cost.toFixed(2)}
+                          </p>
+                        )}
+                        <Badge className={typeColors[record.type] || typeColors.other}>
+                          {record.type.replace('_', ' ').toUpperCase()}
+                        </Badge>
+                      </div>
+                    </div>
+                    
+                    {record.odometer_reading > 0 && (
+                      <div className="flex gap-4 text-sm text-slate-600">
+                        <span>Odometer: {record.odometer_reading} km</span>
+                        {record.next_service_km > 0 && (
+                          <span>Next service: {record.next_service_km} km</span>
+                        )}
+                      </div>
+                    )}
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
